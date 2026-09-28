@@ -24,3 +24,21 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Deploy from GitHub
+
+La aplicación necesita un runtime de servidor para las funciones de Supabase,
+autenticación y tiempo. Por eso el workflow de GitHub publica el Worker en
+Cloudflare en cada push a `main`; GitHub Pages no puede ejecutar estas funciones.
+
+En `Settings > Secrets and variables > Actions` del repositorio, añade estos
+secrets:
+
+- `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`
+- `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY` y `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID`
+- `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SERVICE_ROLE_KEY`
+- `LOVABLE_API_KEY` y `GOOGLE_MAPS_API_KEY`
+
+El token de Cloudflare debe poder desplegar Workers. Tras guardar los secrets,
+un push a `main` iniciará el despliegue desde la pestaña `Actions`.
