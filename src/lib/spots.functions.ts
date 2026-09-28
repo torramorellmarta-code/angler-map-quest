@@ -36,17 +36,12 @@ export const getSpotWeather = createServerFn({ method: "GET" })
     if (!LOVABLE_API_KEY || !GOOGLE_MAPS_API_KEY) {
       throw new Error("Google Maps no está configurado");
     }
-    const url = `https://connector-gateway.lovable.dev/google_maps/weather/v1/currentConditions:lookup`;
+    const url = `https://connector-gateway.lovable.dev/google_maps/weather/v1/currentConditions:lookup?location.latitude=${data.lat}&location.longitude=${data.lng}`;
     const response = await fetch(url, {
-      method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "X-Connection-Api-Key": GOOGLE_MAPS_API_KEY,
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        location: { latitude: data.lat, longitude: data.lng },
-      }),
     });
     if (!response.ok) {
       const body = await response.text();
