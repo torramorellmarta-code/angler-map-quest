@@ -122,8 +122,8 @@ function MapPage() {
   useEffect(() => {
     if (!ready || !mapRef.current || mapObj.current) return;
     mapObj.current = new window.google.maps.Map(mapRef.current, {
-      center: { lat: 41.35, lng: 2.05 },
-      zoom: 9,
+      center: { lat: 41.7, lng: 1.6 },
+      zoom: 8,
       clickableIcons: false,
       mapTypeControl: false,
       streetViewControl: false,
