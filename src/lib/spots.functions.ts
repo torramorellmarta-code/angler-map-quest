@@ -49,13 +49,29 @@ export const getSpotWeather = createServerFn({ method: "GET" })
       throw new Error(`No se pudo obtener el tiempo [${response.status}]`);
     }
     const w = await response.json();
+    const CARDINALS: Record<string, string> = {
+      NORTH: "N", NORTH_NORTHEAST: "NNE", NORTHEAST: "NE", EAST_NORTHEAST: "ENE",
+      EAST: "E", EAST_SOUTHEAST: "ESE", SOUTHEAST: "SE", SOUTH_SOUTHEAST: "SSE",
+      SOUTH: "S", SOUTH_SOUTHWEST: "SSO", SOUTHWEST: "SO", WEST_SOUTHWEST: "OSO",
+      WEST: "O", WEST_NORTHWEST: "ONO", NORTHWEST: "NO", NORTH_NORTHWEST: "NNO",
+    };
+    const CONDITIONS: Record<string, string> = {
+      "Cloudy": "Nublado", "Mostly cloudy": "Muy nuboso", "Partly cloudy": "Parcialmente nublado",
+      "Clear": "Despejado", "Mostly clear": "Casi despejado", "Sunny": "Soleado",
+      "Rain": "Lluvia", "Light rain": "Lluvia ligera", "Heavy rain": "Lluvia fuerte",
+      "Drizzle": "Llovizna", "Thunderstorm": "Tormenta", "Snow": "Nieve",
+      "Fog": "Niebla", "Mist": "Neblina", "Windy": "Ventoso", "Overcast": "Cubierto",
+    };
+    const rawCondition: string | null = w.weatherCondition?.description?.text ?? null;
     return {
       temperature: w.temperature?.degrees ?? null,
       feelsLike: w.feelsLikeTemperature?.degrees ?? null,
-      condition: w.weatherCondition?.description?.text ?? null,
+      condition: rawCondition ? (CONDITIONS[rawCondition] ?? rawCondition) : null,
       humidity: w.relativeHumidity ?? null,
       windSpeed: w.wind?.speed?.value ?? null,
-      windDirection: w.wind?.direction?.cardinal ?? null,
+      windDirection: w.wind?.direction?.cardinal
+        ? (CARDINALS[w.wind.direction.cardinal] ?? w.wind.direction.cardinal)
+        : null,
       pressure: w.airPressure?.meanSeaLevelMillibars ?? null,
       pressureTrend: w.currentConditionsHistory?.pressureTrend ?? null,
       uvIndex: w.uvIndex ?? null,
