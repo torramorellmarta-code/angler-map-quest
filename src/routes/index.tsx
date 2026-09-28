@@ -355,6 +355,13 @@ function MapPage() {
               )}
             </section>
 
+            {selected.description && (
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {selected.description}
+              </p>
+            )}
+
+
             {/* Fish */}
             <section className="mt-4">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
