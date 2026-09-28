@@ -254,6 +254,34 @@ function MapPage() {
               </button>
             ))}
           </div>
+
+          {/* Mobile: hint + horizontal spot chips */}
+          {!selected && (
+            <div className="absolute inset-x-0 bottom-0 z-10 space-y-2 p-3 md:hidden">
+              <p className="panel-glass mx-auto w-fit rounded-full px-3 py-1 text-xs text-foreground">
+                Toca un sitio para ver el tiempo 🌤️
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {visibleSpots.map((spot: Spot) => (
+                  <button
+                    key={spot.id}
+                    onClick={() => {
+                      setSelected(spot);
+                      mapObj.current?.panTo({ lat: spot.lat, lng: spot.lng });
+                    }}
+                    className="panel-glass shrink-0 rounded-xl px-3 py-2 text-left"
+                  >
+                    <div className="whitespace-nowrap text-sm font-semibold text-foreground">
+                      {spot.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {WATER_LABEL[spot.water_type] ?? spot.water_type}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Detail panel */}
