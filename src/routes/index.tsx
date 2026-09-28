@@ -305,11 +305,6 @@ function MapPage() {
               </button>
             </div>
 
-            {selected.description && (
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {selected.description}
-              </p>
-            )}
 
             {/* Weather */}
             <section className="mt-4 rounded-xl bg-secondary/60 p-4">
