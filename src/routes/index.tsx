@@ -326,7 +326,10 @@ function MapPage() {
                 </span>
               </div>
               <button
-                onClick={() => setSelected(null)}
+                onClick={() => {
+                  setSelected(null);
+                  mapObj.current?.setZoom(8);
+                }}
                 className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
                 aria-label="Cerrar"
               >
