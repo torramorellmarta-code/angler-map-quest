@@ -115,9 +115,30 @@ function MapPage() {
   });
 
   const visibleSpots = useMemo(
-    () => (showVisitedOnly ? spots.filter((s: Spot) => visitedIds.has(s.id)) : spots),
+    () =>
+      (showVisitedOnly ? spots.filter((s: Spot) => visitedIds.has(s.id)) : spots).filter(
+        (s: Spot) => !s.parent_id,
+      ),
     [spots, showVisitedOnly, visitedIds],
   );
+
+  // Puntos de pesca dentro del sitio seleccionado (p. ej. dentro de un pantano)
+  const childSpots = useMemo(() => {
+    if (!selected) return [];
+    const parentId = selected.parent_id ?? selected.id;
+    return spots.filter((s: Spot) => s.parent_id === parentId);
+  }, [spots, selected]);
+
+  const selectSpot = (spot: Spot, zoomIn = true) => {
+    setSelected(spot);
+    setNotes("");
+    setRating(0);
+    if (!mapObj.current) return;
+    mapObj.current.panTo({ lat: spot.lat, lng: spot.lng });
+    if (zoomIn && !spot.parent_id && spots.some((s: Spot) => s.parent_id === spot.id)) {
+      mapObj.current.setZoom(12);
+    }
+  };
 
   // Init map
   useEffect(() => {
@@ -145,7 +166,7 @@ function MapPage() {
   useEffect(() => {
     if (!mapObj.current || !window.google) return;
     markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = visibleSpots.map((spot: Spot) => {
+    const mainMarkers = visibleSpots.map((spot: Spot) => {
       const visited = visitedIds.has(spot.id);
       const marker = new window.google.maps.Marker({
         position: { lat: spot.lat, lng: spot.lng },
@@ -160,15 +181,30 @@ function MapPage() {
           strokeWeight: 2,
         },
       });
-      marker.addListener("click", () => {
-        setSelected(spot);
-        setNotes("");
-        setRating(0);
-        mapObj.current.panTo({ lat: spot.lat, lng: spot.lng });
-      });
+      marker.addListener("click", () => selectSpot(spot));
       return marker;
     });
-  }, [visibleSpots, visitedIds]);
+    // Puntos de pesca dentro del sitio seleccionado
+    const childMarkers = childSpots.map((spot: Spot) => {
+      const marker = new window.google.maps.Marker({
+        position: { lat: spot.lat, lng: spot.lng },
+        map: mapObj.current,
+        title: spot.name,
+        zIndex: 10,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: selected?.id === spot.id ? "#e8c96a" : "#f0875a",
+          fillOpacity: 1,
+          strokeColor: "#0f1a20",
+          strokeWeight: 2,
+        },
+      });
+      marker.addListener("click", () => selectSpot(spot, false));
+      return marker;
+    });
+    markersRef.current = [...mainMarkers, ...childMarkers];
+  }, [visibleSpots, visitedIds, childSpots, selected?.id]);
 
   const selectedVisit = selected ? visits.find((v: any) => v.spot_id === selected.id) : null;
 
