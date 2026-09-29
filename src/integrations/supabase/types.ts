@@ -23,6 +23,7 @@ export type Database = {
           lat: number
           lng: number
           name: string
+          parent_id: string | null
           requirements: string | null
           water_type: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           lat: number
           lng: number
           name: string
+          parent_id?: string | null
           requirements?: string | null
           water_type?: string
         }
@@ -45,10 +47,19 @@ export type Database = {
           lat?: number
           lng?: number
           name?: string
+          parent_id?: string | null
           requirements?: string | null
           water_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "spots_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "spots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       visited_spots: {
         Row: {

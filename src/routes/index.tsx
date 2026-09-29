@@ -43,6 +43,7 @@ type Spot = {
   water_type: string;
   requirements: string | null;
   fish_species: string[];
+  parent_id: string | null;
 };
 
 const WATER_LABEL: Record<string, string> = {
@@ -114,9 +115,30 @@ function MapPage() {
   });
 
   const visibleSpots = useMemo(
-    () => (showVisitedOnly ? spots.filter((s: Spot) => visitedIds.has(s.id)) : spots),
+    () =>
+      (showVisitedOnly ? spots.filter((s: Spot) => visitedIds.has(s.id)) : spots).filter(
+        (s: Spot) => !s.parent_id,
+      ),
     [spots, showVisitedOnly, visitedIds],
   );
+
+  // Puntos de pesca dentro del sitio seleccionado (p. ej. dentro de un pantano)
+  const childSpots = useMemo(() => {
+    if (!selected) return [];
+    const parentId = selected.parent_id ?? selected.id;
+    return spots.filter((s: Spot) => s.parent_id === parentId);
+  }, [spots, selected]);
+
+  const selectSpot = (spot: Spot, zoomIn = true) => {
+    setSelected(spot);
+    setNotes("");
+    setRating(0);
+    if (!mapObj.current) return;
+    mapObj.current.panTo({ lat: spot.lat, lng: spot.lng });
+    if (zoomIn && !spot.parent_id && spots.some((s: Spot) => s.parent_id === spot.id)) {
+      mapObj.current.setZoom(12);
+    }
+  };
 
   // Init map
   useEffect(() => {
@@ -144,7 +166,7 @@ function MapPage() {
   useEffect(() => {
     if (!mapObj.current || !window.google) return;
     markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = visibleSpots.map((spot: Spot) => {
+    const mainMarkers = visibleSpots.map((spot: Spot) => {
       const visited = visitedIds.has(spot.id);
       const marker = new window.google.maps.Marker({
         position: { lat: spot.lat, lng: spot.lng },
@@ -159,15 +181,30 @@ function MapPage() {
           strokeWeight: 2,
         },
       });
-      marker.addListener("click", () => {
-        setSelected(spot);
-        setNotes("");
-        setRating(0);
-        mapObj.current.panTo({ lat: spot.lat, lng: spot.lng });
-      });
+      marker.addListener("click", () => selectSpot(spot));
       return marker;
     });
-  }, [visibleSpots, visitedIds]);
+    // Puntos de pesca dentro del sitio seleccionado
+    const childMarkers = childSpots.map((spot: Spot) => {
+      const marker = new window.google.maps.Marker({
+        position: { lat: spot.lat, lng: spot.lng },
+        map: mapObj.current,
+        title: spot.name,
+        zIndex: 10,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: selected?.id === spot.id ? "#e8c96a" : "#f0875a",
+          fillOpacity: 1,
+          strokeColor: "#0f1a20",
+          strokeWeight: 2,
+        },
+      });
+      marker.addListener("click", () => selectSpot(spot, false));
+      return marker;
+    });
+    markersRef.current = [...mainMarkers, ...childMarkers];
+  }, [visibleSpots, visitedIds, childSpots, selected?.id]);
 
   const selectedVisit = selected ? visits.find((v: any) => v.spot_id === selected.id) : null;
 
@@ -229,12 +266,7 @@ function MapPage() {
             {visibleSpots.map((spot: Spot) => (
               <button
                 key={spot.id}
-                onClick={() => {
-                  setSelected(spot);
-                  setNotes(selectedVisit?.notes ?? "");
-                  setRating(selectedVisit?.rating ?? 0);
-                  mapObj.current?.panTo({ lat: spot.lat, lng: spot.lng });
-                }}
+                onClick={() => selectSpot(spot)}
                 className={`panel-glass rounded-xl p-3 text-left transition-all hover:scale-[1.02] ${
                   selected?.id === spot.id ? "ring-2 ring-primary" : ""
                 }`}
@@ -265,10 +297,7 @@ function MapPage() {
                 {visibleSpots.map((spot: Spot) => (
                   <button
                     key={spot.id}
-                    onClick={() => {
-                      setSelected(spot);
-                      mapObj.current?.panTo({ lat: spot.lat, lng: spot.lng });
-                    }}
+                    onClick={() => selectSpot(spot)}
                     className="panel-glass shrink-0 rounded-xl px-3 py-2 text-left"
                   >
                     <div className="whitespace-nowrap text-sm font-semibold text-foreground">
@@ -297,7 +326,10 @@ function MapPage() {
                 </span>
               </div>
               <button
-                onClick={() => setSelected(null)}
+                onClick={() => {
+                  setSelected(null);
+                  mapObj.current?.setZoom(8);
+                }}
                 className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
                 aria-label="Cerrar"
               >
@@ -359,6 +391,36 @@ function MapPage() {
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {selected.description}
               </p>
+            )}
+
+            {/* Puntos de pesca dentro del sitio */}
+            {childSpots.length > 0 && (
+              <section className="mt-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  📍 Puntos donde se suele pescar
+                </h3>
+                <div className="mt-2 space-y-2">
+                  {childSpots.map((c: Spot) => (
+                    <button
+                      key={c.id}
+                      onClick={() => selectSpot(c, false)}
+                      className={`w-full rounded-xl border p-3 text-left transition-colors ${
+                        selected.id === c.id
+                          ? "border-accent bg-accent/10"
+                          : "border-border bg-background/50 hover:bg-secondary/60"
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-foreground">{c.name}</div>
+                      {c.description && (
+                        <div className="mt-0.5 text-xs text-muted-foreground">{c.description}</div>
+                      )}
+                      <div className="mt-1 text-xs text-primary">
+                        🐟 {c.fish_species.join(" · ")}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
             )}
 
 
