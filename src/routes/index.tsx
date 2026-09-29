@@ -266,12 +266,7 @@ function MapPage() {
             {visibleSpots.map((spot: Spot) => (
               <button
                 key={spot.id}
-                onClick={() => {
-                  setSelected(spot);
-                  setNotes(selectedVisit?.notes ?? "");
-                  setRating(selectedVisit?.rating ?? 0);
-                  mapObj.current?.panTo({ lat: spot.lat, lng: spot.lng });
-                }}
+                onClick={() => selectSpot(spot)}
                 className={`panel-glass rounded-xl p-3 text-left transition-all hover:scale-[1.02] ${
                   selected?.id === spot.id ? "ring-2 ring-primary" : ""
                 }`}
@@ -302,10 +297,7 @@ function MapPage() {
                 {visibleSpots.map((spot: Spot) => (
                   <button
                     key={spot.id}
-                    onClick={() => {
-                      setSelected(spot);
-                      mapObj.current?.panTo({ lat: spot.lat, lng: spot.lng });
-                    }}
+                    onClick={() => selectSpot(spot)}
                     className="panel-glass shrink-0 rounded-xl px-3 py-2 text-left"
                   >
                     <div className="whitespace-nowrap text-sm font-semibold text-foreground">
@@ -396,6 +388,36 @@ function MapPage() {
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {selected.description}
               </p>
+            )}
+
+            {/* Puntos de pesca dentro del sitio */}
+            {childSpots.length > 0 && (
+              <section className="mt-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  📍 Puntos donde se suele pescar
+                </h3>
+                <div className="mt-2 space-y-2">
+                  {childSpots.map((c: Spot) => (
+                    <button
+                      key={c.id}
+                      onClick={() => selectSpot(c, false)}
+                      className={`w-full rounded-xl border p-3 text-left transition-colors ${
+                        selected.id === c.id
+                          ? "border-accent bg-accent/10"
+                          : "border-border bg-background/50 hover:bg-secondary/60"
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-foreground">{c.name}</div>
+                      {c.description && (
+                        <div className="mt-0.5 text-xs text-muted-foreground">{c.description}</div>
+                      )}
+                      <div className="mt-1 text-xs text-primary">
+                        🐟 {c.fish_species.join(" · ")}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
             )}
 
 
