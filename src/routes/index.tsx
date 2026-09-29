@@ -43,6 +43,7 @@ type Spot = {
   water_type: string;
   requirements: string | null;
   fish_species: string[];
+  parent_id: string | null;
 };
 
 const WATER_LABEL: Record<string, string> = {

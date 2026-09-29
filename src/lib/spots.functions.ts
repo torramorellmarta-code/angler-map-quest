@@ -20,7 +20,7 @@ export const getSpots = createServerFn({ method: "GET" }).handler(async () => {
   });
   const { data, error } = await supabase
     .from("spots")
-    .select("id, name, description, lat, lng, water_type, requirements, fish_species")
+    .select("id, name, description, lat, lng, water_type, requirements, fish_species, parent_id")
     .order("name");
   if (error) throw new Error(error.message);
   return data ?? [];
